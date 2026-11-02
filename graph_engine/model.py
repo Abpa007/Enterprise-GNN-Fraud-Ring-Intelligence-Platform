@@ -18,22 +18,18 @@ class GraphSAGEEncoder(torch.nn.Module):
 class FraudGraphClassifier(torch.nn.Module):
     def __init__(self, metadata, hidden_channels=64, out_channels=32):
         super().__init__()
-        # 1. Base GraphSAGE encoder wrapper converted for Heterogeneous graphs
         base_encoder = GraphSAGEEncoder(hidden_channels, out_channels)
+        # Convert base encoder to handle all heterogeneous node and edge types
         self.gnn = to_hetero(base_encoder, metadata, aggr='sum')
         
-        # 2. Executive classification head for transaction fraud detection
         self.classifier = torch.nn.Sequential(
             torch.nn.Linear(out_channels, 16),
             torch.nn.ReLU(),
-            torch.nn.Linear(16, 2) # Binary classification: 0 (Legitimate), 1 (Fraud)
+            torch.nn.Linear(16, 2)
         )
 
     def forward(self, x_dict, edge_index_dict):
-        # Pass features through the heterogeneous GNN message-passing layers
         node_embeddings = self.gnn(x_dict, edge_index_dict)
-        
-        # Extract embeddings specifically for transaction nodes to predict fraud
         tx_embeddings = node_embeddings['transaction']
         logits = self.classifier(tx_embeddings)
         return logits
