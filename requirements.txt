@@ -1,0 +1,11 @@
+torch
+torch_geometric
+pandas
+numpy
+scikit-learn
+qdrant-client
+fastapi
+uvicorn
+pydantic
+python-dotenv
+faker
